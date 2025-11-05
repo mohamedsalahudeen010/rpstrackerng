@@ -8,130 +8,172 @@ import { PtItemChitchatComponent } from '../../components/detail/item-chitchat/p
 import { PtItemTasksComponent } from '../../components/detail/item-tasks/pt-item-tasks.component';
 import { PtItemFormComponent } from '../../components/detail/item-form/pt-item-form.component';
 import { DetailSectionSelectorComponent } from '../../components/detail/detail-section-selector/detail-section-selector.component';
-import { PtItem, PtTask, PtComment, PtUser } from '../../../../core/models/domain';
+import {
+  PtItem,
+  PtTask,
+  PtComment,
+  PtUser,
+} from '../../../../core/models/domain';
 import { PtUserService, NavigationService } from '../../../../core/services';
 import { Store } from '../../../../core/state/app-store';
-import { PtNewTask, PtTaskUpdate, PtNewComment } from '../../../../shared/models/dto';
+import {
+  PtNewTask,
+  PtTaskUpdate,
+  PtNewComment,
+} from '../../../../shared/models/dto';
 import { DetailScreenType } from '../../../../shared/models/ui/types/detail-screens';
 import { BacklogService } from '../../services/backlog.service';
 import { BacklogRepository } from '../../repositories/backlog.repository';
+import { KENDO_TABSTRIP, SelectEvent } from '@progress/kendo-angular-layout';
 
 @Component({
-    selector: 'app-backlog-detail-page',
-    templateUrl: 'detail.page.component.html',
-    imports: [DetailSectionSelectorComponent, PtItemFormComponent, PtItemTasksComponent, PtItemChitchatComponent, AsyncPipe],
-    providers: [BacklogService, BacklogRepository]
+  selector: 'app-backlog-detail-page',
+  templateUrl: 'detail.page.component.html',
+  imports: [
+    DetailSectionSelectorComponent,
+    PtItemFormComponent,
+    PtItemTasksComponent,
+    PtItemChitchatComponent,
+    AsyncPipe,
+    KENDO_TABSTRIP,
+  ],
+  providers: [BacklogService, BacklogRepository],
 })
 export class DetailPageComponent implements OnInit, OnDestroy {
+  private itemId = 0;
+  private currentItemSub: Subscription | undefined;
+  public selectedDetailsScreen: DetailScreenType = 'form';
 
-    private itemId = 0;
-    private currentItemSub: Subscription | undefined;
-    public selectedDetailsScreen: DetailScreenType = 'form';
+  public item: PtItem | undefined;
+  public tasks$: BehaviorSubject<PtTask[]> = new BehaviorSubject<PtTask[]>([]);
+  public comments$: BehaviorSubject<PtComment[]> = new BehaviorSubject<
+    PtComment[]
+  >([]);
+  public currentUser$: Observable<PtUser>;
 
-    public item: PtItem | undefined;
-    public tasks$: BehaviorSubject<PtTask[]> = new BehaviorSubject<PtTask[]>([]);
-    public comments$: BehaviorSubject<PtComment[]> = new BehaviorSubject<PtComment[]>([]);
-    public currentUser$: Observable<PtUser>;
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private backlogService: BacklogService,
+    private ptUserService: PtUserService,
+    private navigationService: NavigationService,
+    private store: Store
+  ) {
+    this.currentUser$ = this.store.select<PtUser>('currentUser');
+  }
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private backlogService: BacklogService,
-        private ptUserService: PtUserService,
-        private navigationService: NavigationService,
-        private store: Store
-    ) {
-        this.currentUser$ = this.store.select<PtUser>('currentUser');
+  public ngOnInit() {
+    const id = this.activatedRoute.snapshot.paramMap.get('id');
+    const screen = this.activatedRoute.snapshot.paramMap.get(
+      'screen'
+    ) as DetailScreenType;
+
+    this.itemId = parseInt(id, undefined);
+
+    this.currentItemSub = this.backlogService
+      .getPtItem(this.itemId)
+      .subscribe((item) => {
+        this.item = item;
+        this.tasks$.next(item.tasks);
+        this.comments$.next(item.comments);
+      });
+
+    if (screen) {
+      this.selectedDetailsScreen = screen; // Load the appropriate screen
+    } else {
+      this.selectedDetailsScreen = 'form'; // Default to 'form' if no screen is provided
     }
+  }
 
-    public ngOnInit() {
-        const id = this.activatedRoute.snapshot.paramMap.get('id');
-        const screen = this.activatedRoute.snapshot.paramMap.get('screen') as DetailScreenType;
+  public isTabSelected(screenType: DetailScreenType): boolean {
+    return this.selectedDetailsScreen === screenType;
+  }
 
-        this.itemId = parseInt(id, undefined);
+  public onTabSelected(event:SelectEvent){
+  
+   this.onScreenSelected(event.title.toLowerCase() as DetailScreenType)
+  }
 
-        this.currentItemSub = this.backlogService.getPtItem(this.itemId)
-            .subscribe(item => {
-                this.item = item;
-                this.tasks$.next(item.tasks);
-                this.comments$.next(item.comments);
-            });
+  public onScreenSelected(screen: DetailScreenType): void {
+    this.selectedDetailsScreen = screen;
 
-        if (screen) {
-            this.selectedDetailsScreen = screen; // Load the appropriate screen
-        } else {
-            this.selectedDetailsScreen = 'form'; // Default to 'form' if no screen is provided
-        }
+    if (screen === 'form') {
+      this.navigationService.navigate([`/detail/${this.itemId}`]);
+    } else {
+      this.navigationService.navigate([`/detail/${this.itemId}/${screen}`]);
     }
+  }
 
-    public onScreenSelected(screen: DetailScreenType): void {
-        this.selectedDetailsScreen = screen;
-    
-        if (screen === 'form') {
-          this.navigationService.navigate([`/detail/${this.itemId}`]);
-        } else {
-          this.navigationService.navigate([`/detail/${this.itemId}/${screen}`]);
-        }
+  public onUsersRequested(name: string) {
+    this.ptUserService.fetchUsers(name);
+  }
+
+  public onAddNewTask(newTask: PtNewTask) {
+    if (this.item) {
+      this.backlogService.addNewPtTask(newTask, this.item).then((nextTask) => {
+        this.tasks$.next([nextTask].concat(this.tasks$.value));
+      });
     }
+  }
 
-    public onUsersRequested(name: string) {
-        this.ptUserService.fetchUsers(name);
-    }
-
-    public onAddNewTask(newTask: PtNewTask) {
-        if (this.item) {
-            this.backlogService.addNewPtTask(newTask, this.item).then(nextTask => {
-                this.tasks$.next([nextTask].concat(this.tasks$.value));
-            });
-        }
-    }
-
-    public onUpdateTask(taskUpdate: PtTaskUpdate) {
-        if (this.item) {
-            if (taskUpdate.delete) {
-                this.backlogService.deletePtTask(this.item, taskUpdate.task).then(ok => {
-                    if (ok) {
-                        const newTasks = this.tasks$.value.filter(task => {
-                            if (task.id !== taskUpdate.task.id) {
-                                return task;
-                            }
-                            return null;
-                        });
-                        this.tasks$.next(newTasks);
-                    }
-                });
-            } else {
-                this.backlogService.updatePtTask(this.item, taskUpdate.task, taskUpdate.toggle, taskUpdate.newTitle).then(updatedTask => {
-                    const newTasks = this.tasks$.value.map(task => {
-                        if (task.id === updatedTask.id) {
-                            return updatedTask;
-                        } else {
-                            return task;
-                        }
-                    });
-                    this.tasks$.next(newTasks);
-                });
+  public onUpdateTask(taskUpdate: PtTaskUpdate) {
+    if (this.item) {
+      if (taskUpdate.delete) {
+        this.backlogService
+          .deletePtTask(this.item, taskUpdate.task)
+          .then((ok) => {
+            if (ok) {
+              const newTasks = this.tasks$.value.filter((task) => {
+                if (task.id !== taskUpdate.task.id) {
+                  return task;
+                }
+                return null;
+              });
+              this.tasks$.next(newTasks);
             }
-        }
-    }
-
-    public onAddNewComment(newComment: PtNewComment) {
-        if (this.item) {
-            this.backlogService.addNewPtComment(newComment, this.item).then(nextComment => {
-                this.comments$.next([nextComment].concat(this.comments$.value));
+          });
+      } else {
+        this.backlogService
+          .updatePtTask(
+            this.item,
+            taskUpdate.task,
+            taskUpdate.toggle,
+            taskUpdate.newTitle
+          )
+          .then((updatedTask) => {
+            const newTasks = this.tasks$.value.map((task) => {
+              if (task.id === updatedTask.id) {
+                return updatedTask;
+              } else {
+                return task;
+              }
             });
-        }
+            this.tasks$.next(newTasks);
+          });
+      }
     }
+  }
 
-    public onItemSaved(item: PtItem) {
-        this.currentItemSub = this.backlogService.updatePtItem(item)
-            .subscribe(updateItem => {
-                this.item = updateItem;
-            });
+  public onAddNewComment(newComment: PtNewComment) {
+    if (this.item) {
+      this.backlogService
+        .addNewPtComment(newComment, this.item)
+        .then((nextComment) => {
+          this.comments$.next([nextComment].concat(this.comments$.value));
+        });
     }
+  }
 
-    public ngOnDestroy(): void {
-        if (this.currentItemSub) {
-            this.currentItemSub.unsubscribe();
-        }
+  public onItemSaved(item: PtItem) {
+    this.currentItemSub = this.backlogService
+      .updatePtItem(item)
+      .subscribe((updateItem) => {
+        this.item = updateItem;
+      });
+  }
+
+  public ngOnDestroy(): void {
+    if (this.currentItemSub) {
+      this.currentItemSub.unsubscribe();
     }
+  }
 }

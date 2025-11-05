@@ -1,91 +1,172 @@
 <form>
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Title</label>
-        <div class="col-sm-10">
-            <input class="form-control" [(ngModel)]="itemForm.title" (blur)="onBlurTextField()" name="title" />
-        </div>
+  <div class="form-group row">
+    <kendo-floatinglabel text="title">
+      <kendo-textbox
+        class="form-control"
+        [(ngModel)]="itemForm.title"
+        (blur)="onBlurTextField()"
+        name="title"
+      />
+    </kendo-floatinglabel>
+  </div>
+
+  <div class="form-group row">
+    <kendo-floatinglabel text="description">
+      <kendo-textarea
+        class="form-control"
+        [(ngModel)]="itemForm.description"
+        (blur)="onBlurTextField()"
+        name="description"
+      ></kendo-textarea>
+    </kendo-floatinglabel>
+  </div>
+
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">Item Type</label>
+    <div class="col-sm-10">
+        <kendo-dropdownlist
+        #dropdownlist
+        [data]="itemTypesProvider"
+        [(ngModel)]="itemForm.typeStr"
+        (valueChange)="onDropdownChange()"
+        name="itemType"
+      >
+        <ng-template kendoDropDownListItemTemplate let-dataItem>
+            <img [src]="getIndicatorImage(dataItem)" alt="" class="backlog-icon">
+          <span >{{ dataItem }}</span>
+        </ng-template>
+      </kendo-dropdownlist>
+      <!-- <select
+        class="form-control"
+        [(ngModel)]="itemForm.typeStr"
+        (ngModelChange)="onDropdownChange()"
+        name="itemType"
+      >
+        @for (itemType of itemTypesProvider; track itemType) {
+        <option [ngValue]="itemType">{{ itemType }}</option>
+        }
+      </select> -->
     </div>
+  </div>
 
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Description</label>
-        <div class="col-sm-10">
-            <textarea class="form-control" [(ngModel)]="itemForm.description" (blur)="onBlurTextField()" name="description"></textarea>
-        </div>
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">Status</label>
+    <div class="col-sm-10">
+      <!-- <select
+        class="form-control"
+        [(ngModel)]="itemForm.statusStr"
+        (ngModelChange)="onDropdownChange()"
+        name="status"
+      >
+        @for (status of statusesProvider; track status) {
+        <option [ngValue]="status">{{ status }}</option>
+        }
+      </select> -->
+      <kendo-dropdownlist
+        #dropdownlist
+        [data]="statusesProvider"
+        [(ngModel)]="itemForm.statusStr"
+        (valueChange)="onDropdownChange()"
+        name="status"
+      >
+      </kendo-dropdownlist>
     </div>
+  </div>
 
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Item Type</label>
-        <div class="col-sm-10">
-            <select class="form-control" [(ngModel)]="itemForm.typeStr" (ngModelChange)="onDropdownChange()" name="itemType">
-                @for (itemType of itemTypesProvider; track itemType) {
-                    <option [ngValue]="itemType">{{itemType}}</option>
-                }
-            </select>
-        </div>
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">Estimate</label>
+    <div class="col-sm-10">
+        <kendo-slider  [(ngModel)]="itemForm.estimate"
+        (blur)="onBlurTextField()"
+        [min]="0"
+        [max]="20"
+        name="estimate"
+        [fixedTickWidth]="20"
+        [smallStep]="2"
+        [largeStep]="4">
+        </kendo-slider>
+      <!-- <input
+        class="form-control"
+        type="range"
+        step="1"
+        min="0"
+        max="20"
+        [(ngModel)]="itemForm.estimate"
+        (blur)="onBlurTextField()"
+        name="estimate"
+      /> -->
     </div>
+  </div>
 
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Status</label>
-        <div class="col-sm-10">
-            <select class="form-control" [(ngModel)]="itemForm.statusStr" (ngModelChange)="onDropdownChange()" name="status">
-                @for (status of statusesProvider; track status) {
-                    <option [ngValue]="status">{{status}}</option>
-                }
-            </select>
-        </div>
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">Priority</label>
+    <div class="col-sm-10">
+      <kendo-dropdownlist
+        #dropdownlist
+        [data]="prioritiesProvider"
+        [(ngModel)]="itemForm.priorityStr"
+        (valueChange)="onDropdownChange()"
+        name="priority"
+      >
+        <ng-template kendoDropDownListItemTemplate let-dataItem>
+          <span [class]="'badge '+getPriorityClass(dataItem)">{{ dataItem }}</span>
+        </ng-template>
+      </kendo-dropdownlist>
+      <!-- <select
+        class="form-control"
+        [(ngModel)]="itemForm.priorityStr"
+        (ngModelChange)="onDropdownChange()"
+        name="priority"
+      >
+        @for (priority of prioritiesProvider; track priority) {
+        <option [ngValue]="priority">{{ priority }}</option>
+        }
+      </select> -->
     </div>
+  </div>
 
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Estimate</label>
-        <div class="col-sm-10">
-            <input class="form-control" type="range" step="1" min="0" max="20" [(ngModel)]="itemForm.estimate" (blur)="onBlurTextField()"
-                name="estimate" />
-        </div>
+  <div class="form-group row">
+    <label class="col-sm-2 col-form-label">Assignee</label>
+
+    <div class="col-sm-10">
+      <img [src]="selectedAssignee?.avatar" class="li-avatar rounded" />
+      <span>{{ itemForm.assigneeName }}</span>
+
+      <button
+        class="btn btn-sm btn-outline-secondary"
+        (click)="assigneePickerOpen('custom-modal-1')"
+      >
+        Pick assignee
+      </button>
     </div>
-
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Priority</label>
-        <div class="col-sm-10">
-            <select class="form-control" [(ngModel)]="itemForm.priorityStr" (ngModelChange)="onDropdownChange()" name="priority">
-                @for (priority of prioritiesProvider; track priority) {
-                    <option [ngValue]="priority">{{priority}}</option>
-                }
-            </select>
-        </div>
-    </div>
-
-    <div class="form-group row">
-        <label class="col-sm-2 col-form-label">Assignee</label>
-
-        <div class="col-sm-10">
-            <img [src]="selectedAssignee?.avatar" class="li-avatar rounded" />
-            <span>{{ itemForm.assigneeName }}</span>
-
-            <button class="btn btn-sm btn-outline-secondary" (click)="assigneePickerOpen('custom-modal-1')">Pick assignee</button>
-        </div>
-    </div>
+  </div>
 </form>
 
-
 <custom-modal id="custom-modal-1">
-    <div class="modal-header">
-        <h4 class="modal-title" id="modal-basic-title">Select Assignee</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" (click)="closeModal('custom-modal-1')"></button>
-    </div>
-    <div class="modal-body">
-        <ul class="list-group list-group-flush">
-            @for (user of users$ | async; track user.id) {
-                <li class="list-group-item d-flex justify-content-between align-items-center"
-                (click)="selectUser(user, 'custom-modal-1')">
-                    <span>{{ user?.fullName }}</span>
-                    <span class="badge ">
-                        <img [src]="user?.avatar" class="li-avatar rounded mx-auto d-block" />
-                    </span>
-                </li>
-            }
-        </ul>
-    </div>
-    <div class="modal-footer">
-
-    </div>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Select Assignee</h4>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="modal"
+      aria-label="Close"
+      (click)="closeModal('custom-modal-1')"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <ul class="list-group list-group-flush">
+      @for (user of users$ | async; track user.id) {
+      <li
+        class="list-group-item d-flex justify-content-between align-items-center"
+        (click)="selectUser(user, 'custom-modal-1')"
+      >
+        <span>{{ user?.fullName }}</span>
+        <span class="badge">
+          <img [src]="user?.avatar" class="li-avatar rounded mx-auto d-block" />
+        </span>
+      </li>
+      }
+    </ul>
+  </div>
+  <div class="modal-footer"></div>
 </custom-modal>

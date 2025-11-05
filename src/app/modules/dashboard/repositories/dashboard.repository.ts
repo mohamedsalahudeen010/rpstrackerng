@@ -7,6 +7,7 @@ import { environment as env } from '../../../../environments/environment';
 
 import { StatusCounts, PriorityCounts, TypeCounts } from '../models';
 import { DashboardFilter } from '../../../shared/models/dto/stats/dashboard-filter';
+import { FilteredIssues } from '../../../shared/models/dto/stats/filtered-issues';
 
 
 @Injectable()
@@ -34,6 +35,10 @@ export class DashboardRepository {
         return `${env.apiEndpoint}/stats/prioritycounts?${paramStr}`;
     }
 
+    private getFilteredIssuesUrl(paramStr: string): string {
+        return `${env.apiEndpoint}/stats/filteredissues?${paramStr}`;
+    }
+
     public getStatusCounts(filter: DashboardFilter): Observable<StatusCounts> {
         return this.http.get<StatusCounts>(this.getStatusCountsUrl(this.getFilterParamString(filter)));
     }
@@ -45,4 +50,8 @@ export class DashboardRepository {
     public getTypeCounts(filter: DashboardFilter): Observable<TypeCounts> {
         return this.http.get<TypeCounts>(this.getTypeCountsUrl(this.getFilterParamString(filter)));
     }
+
+    public getFilteredIssues(filter: DashboardFilter): Observable<FilteredIssues> {
+            return this.http.get<FilteredIssues>(this.getFilteredIssuesUrl(this.getFilterParamString(filter)));
+        }
 }

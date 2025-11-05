@@ -1,7 +1,7 @@
 <div class="btn-group mr-2">
-    <button type="button" (click)="onFormTap()" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'form'">Form</button>
+    <button type="button" (click)="onTap('form')" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'form'">Form</button>
 
-    <button type="button" (click)="onTasksTap()" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'tasks'">Tasks</button>
+    <button type="button" (click)="onTap('tasks')" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'tasks'">Tasks</button>
 
-    <button type="button" (click)="onChitchatTap()" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'chitchat'">Chitchat</button>
+    <button type="button" (click)="onTap('chitchat')" class="btn btn-sm btn-outline-secondary" [class.active]="selectedScreen === 'chitchat'">Chitchat</button>
 </div>

@@ -14,8 +14,8 @@ export class DetailSectionSelectorComponent {
     @Input() selectedScreen: DetailScreenType = 'form';
     @Output() screenSelected = new EventEmitter<DetailScreenType>();
 
-    public onFormTap() {
-        this.screenSelected.emit('form');
+    public onTap(event:DetailScreenType) {
+        this.screenSelected.emit(event);
     }
     public onTasksTap() {
         this.screenSelected.emit('tasks');
